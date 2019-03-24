@@ -1,10 +1,11 @@
+import os
 import socket
 import threading
 from time import time
 
 from log import Logger
 
-TIMEOUT = 5
+TIMEOUT = 10
 
 
 class Tello:
@@ -15,7 +16,7 @@ class Tello:
     cmd_address = (tello_ip, cmd_port)
     state_address = (tello_ip, state_port)
 
-    def __init__(self):
+    def __init__(self, session_id):
         # bind command socket to command address
         self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cmd_socket.bind((self.host, self.cmd_port))
@@ -28,6 +29,8 @@ class Tello:
 
         # response waiting flag
         self.waiting = False
+
+        self.session_id = session_id
 
         # initialize the logger object
         self.log = Logger()
@@ -79,12 +82,22 @@ class Tello:
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
+    def write_session(self):
+        try:
+            os.makedirs('sessions')
+        except FileExistsError:
+            # session directory already exists
+            pass
+        name = 'sessions/session_{}.txt'.format(self.session_id)
+        self.log.to_text(name)
+
     def initialize(self):
         self.send_command('command')
 
 
-obj = Tello()
+obj = Tello(1)
 obj.initialize()
-cmd_list = ['battery?', 'time?', 'temp?']
+cmd_list = ['battery?', 'time?', 'temp?', 'takeoff', 'up 20', 'land']
 for cmd in cmd_list:
     obj.send_command(cmd)
+obj.write_session()

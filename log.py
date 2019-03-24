@@ -32,8 +32,10 @@ class Logger:
             return False
 
     def log_response(self, response):
+        """Appends to command_tuples (command, sTime, rTime)."""
         rsp_time = time()
         latest_cmd = self.commands[-1]
+        # form the cmdPoint tuple
         cmd_tuple = cmdPoint(
             command=latest_cmd[0], sTime=latest_cmd[1], rTime=rsp_time)
         self.command_tuples.append(cmd_tuple)
@@ -43,5 +45,26 @@ class Logger:
             self.start_session()
             self.initialized = True
 
-    def __str__(self):
-        return ''
+    def get_pathing_commands(self):
+        """Returns a list of the pathing commands.
+
+        Pathing commands have the following format. {direction} {value} 
+        """
+        pathing_command_list = [
+            'up', 'down', 'left', 'right', 'forward', 'back', 'cw', 'ccw'
+        ]
+        filtered_commands = list(
+            filter(lambda x: x.command.split(' ')[0] in pathing_command_list,
+                   self.command_tuples))
+        return filtered_commands
+
+    def to_text(self, txt_name):
+        """Creates a text to with the starting datetime and the
+        pathing commands."""
+        if self.starting_time is None:
+            print('[INFO] Empty session.')
+            return
+        with open(txt_name, 'w') as f:
+            f.write(self.starting_time + '\n')
+            for cmd in self.get_pathing_commands():
+                f.write('\n' + cmd.command)
