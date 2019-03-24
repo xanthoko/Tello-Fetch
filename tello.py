@@ -4,7 +4,7 @@ from time import time
 
 from log import Logger
 
-TIMEOUT = 2
+TIMEOUT = 5
 
 
 class Tello:
@@ -28,7 +28,6 @@ class Tello:
 
         # response waiting flag
         self.waiting = False
-        self.initialized = False
 
         # initialize the logger object
         self.log = Logger()
@@ -39,7 +38,7 @@ class Tello:
             # can be accepted and sent
             print('[ERROR] Another command awaits reponse, please wait')
         else:
-            if command != 'command' and not self.initialized:
+            if command != 'command' and not self.log.initialized:
                 # if tello is not initialized it cannot accept any commands
                 print(
                     '[ERROR]: Tello must be initialized. Run "command" first.')
@@ -48,6 +47,7 @@ class Tello:
             # send the command encoded to utf-8
             print('[INFO]  Sending: {}'.format(command))
             self.cmd_socket.sendto(command.encode('utf-8'), self.cmd_address)
+            self.log.add_command(command)
             # waiting flag is set to True
             self.waiting = True
 
@@ -58,6 +58,7 @@ class Tello:
                     # error and set the waiting flag to False, so that the server
                     # can accept a new command
                     print('[ERROR] Command {} timed out.'.format(command))
+                    self.log.command_timeout()
                     self.waiting = False
                     break
             else:
@@ -73,19 +74,17 @@ class Tello:
                 if self.waiting:
                     # if the server is waiting for a reponse, set the waiting
                     # flag to False, as the response has arrived
-                    self.waiting = False
                     self.log.log_response(response)
+                    self.waiting = False
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
     def initialize(self):
-        self.initialized = True
-        self.log.start_session()
         self.send_command('command')
 
 
 obj = Tello()
 obj.initialize()
-command_list = ['command', 'battery?', 'time?']
-for command in command_list:
-    obj.send_command(command)
+cmd_list = ['battery?', 'time?', 'temp?']
+for cmd in cmd_list:
+    obj.send_command(cmd)
