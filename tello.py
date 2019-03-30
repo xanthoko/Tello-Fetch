@@ -93,11 +93,3 @@ class Tello:
 
     def initialize(self):
         self.send_command('command')
-
-
-obj = Tello(1)
-obj.initialize()
-cmd_list = ['battery?', 'time?', 'temp?', 'takeoff', 'up 20', 'land']
-for cmd in cmd_list:
-    obj.send_command(cmd)
-obj.write_session()
