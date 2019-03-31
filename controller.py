@@ -26,8 +26,8 @@ class Controller:
         """Initializes Tello object with the given session id
         and setup listeners on key pressing events."""
         self.tello = Tello(session_id)
-        # all command keys have the same callback except "i"
-        keyboard.on_press_key('i', self.connect)
+        # all command keys have the same callback except "c"
+        keyboard.on_press_key('c', self.connect)
         keyboard.on_press_key('t', self.exec_cmd)
         keyboard.on_press_key('l', self.exec_cmd)
         keyboard.on_press_key('up', self.exec_cmd)
@@ -41,7 +41,7 @@ class Controller:
         keyboard.on_press_key('r', self.fetch)
 
     def connect(self, event):
-        """Uppon pressing "i", tello is initialized with the
+        """Uppon pressing "c", tello is initialized with the
         "command" command and the session begins"""
         self.tello.initialize()
 
