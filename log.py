@@ -16,7 +16,7 @@ class Logger:
         self.initialized = False
 
     def start_session(self):
-        self.starting_time = datetime.now().strftime('%A %w. %B, %H:%M')
+        self.starting_time = datetime.now().strftime('%A %d. %B, %H:%M')
         self.start_stamp = time()
 
     def add_command(self, command):
@@ -46,9 +46,11 @@ class Logger:
             self.initialized = True
 
     def get_pathing_commands(self):
-        """Returns a list of the pathing commands.
+        """Returns a list of the grouped pathing commands.
 
-        Pathing commands have the following format. {direction} {value} 
+        Pathing commands have the following format: {direction} {value}
+        Same commands are grouped, that means that they are represented
+        as {direction} {sum_value}.
         """
         pathing_command_list = [
             'up', 'down', 'left', 'right', 'forward', 'back', 'cw', 'ccw'
@@ -56,7 +58,66 @@ class Logger:
         filtered_commands = list(
             filter(lambda x: x.command.split(' ')[0] in pathing_command_list,
                    self.command_tuples))
-        return filtered_commands
+
+        last_cmd = None
+        sum_value = 0  # value of consecutive same commands
+        grouped = []
+        for ind, cmd in enumerate(filtered_commands):
+            direction, value = cmd.command.split(' ')
+            value = int(value)
+
+            if not ind:
+                # if first command, just set last command to current
+                # and increase the sum_value
+                last_cmd = direction
+                sum_value += value
+                continue
+
+            if last_cmd == direction:
+                # if same command just increase the sum_value
+                sum_value += value
+            else:
+                # if commands diviate, append to grouped the last command
+                # with the sum_value
+                grouped.append('{} {}'.format(last_cmd, sum_value))
+                last_cmd = direction
+                # sum_value must be set to current value and not 0!
+                sum_value = value
+
+            if ind == len(filtered_commands) - 1:
+                # if the last command, add it to grouped along with the
+                # sum value
+                grouped.append('{} {}'.format(direction, sum_value))
+        return grouped
+
+    def reverse_path_cmd(self):
+        """Iterates through the grouped pathing commands and returns their
+        reveresed."""
+        # path_cmd is a list of cmdPoints
+        path_cmd = self.get_pathing_commands()
+
+        reverse_cmd_map = {
+            'forward': 'back',
+            'back': 'forward',
+            'left': 'right',
+            'right': 'left',
+            'up': 'down',
+            'down': 'up',
+            'cw': 'ccw',
+            'ccw': 'cw'
+        }
+
+        reversed_path_cmd = []
+        for cmd in reversed(path_cmd):
+            direction, value = cmd.split(' ')
+            try:
+                reversed_dir = reverse_cmd_map[direction]
+                reversed_cmd = '{} {}'.format(reversed_dir, value)
+                reversed_path_cmd.append(reversed_cmd)
+            except KeyError:
+                # direction not found in reverse_cmd_map
+                print('Invalid direction')
+        return reversed_path_cmd
 
     def to_text(self, txt_name):
         """Creates a text to with the starting datetime and the
@@ -67,4 +128,4 @@ class Logger:
         with open(txt_name, 'w') as f:
             f.write(self.starting_time + '\n')
             for cmd in self.get_pathing_commands():
-                f.write('\n' + cmd.command)
+                f.write('\n' + cmd)

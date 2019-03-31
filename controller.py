@@ -38,6 +38,7 @@ class Controller:
         keyboard.on_press_key('s', self.exec_cmd)
         keyboard.on_press_key('a', self.exec_cmd)
         keyboard.on_press_key('d', self.exec_cmd)
+        keyboard.on_press_key('r', self.fetch)
 
     def connect(self, event):
         """Uppon pressing "i", tello is initialized with the
@@ -53,6 +54,10 @@ class Controller:
             self.tello.send_command(command)
         except KeyError:
             print('[ERROR]: Cannot handle this command key.')
+
+    def fetch(self, event):
+        """Brings tello to its starting point."""
+        self.tello.fetch()
 
     def command_loop(self):
         """Waits for keys to be pressed.

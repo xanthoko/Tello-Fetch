@@ -35,7 +35,7 @@ class Tello:
         # initialize the logger object
         self.log = Logger()
 
-    def send_command(self, command):
+    def send_command(self, command, reverse=False):
         if self.waiting:
             # if the server is waiting for a reponse, not further command
             # can be accepted and sent
@@ -47,8 +47,10 @@ class Tello:
                     '[ERROR]: Tello must be initialized. Run "command" first.')
                 return False
 
+            if not reverse:
+                # if the command is part of fetching, dont print it
+                print('[INFO]  Sending: {}'.format(command))
             # send the command encoded to utf-8
-            print('[INFO]  Sending: {}'.format(command))
             self.cmd_socket.sendto(command.encode('utf-8'), self.cmd_address)
             self.log.add_command(command)
             # waiting flag is set to True
@@ -81,6 +83,13 @@ class Tello:
                     self.waiting = False
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
+
+    def fetch(self):
+        """Sends the reversed path commands to tello."""
+        print('[INFO] Returning home...')
+        r_cmds = self.log.reverse_path_cmd()
+        for cmd in r_cmds:
+            self.send_command(cmd, reverse=True)
 
     def write_session(self):
         try:
