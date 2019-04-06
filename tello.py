@@ -17,7 +17,7 @@ class Tello:
     state_address = (tello_ip, state_port)
 
     def __init__(self, session_id):
-        # bind command socket to command address
+        # create command socket and bind it to command address
         self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cmd_socket.bind((self.host, self.cmd_port))
 
