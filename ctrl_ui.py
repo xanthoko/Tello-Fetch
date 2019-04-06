@@ -7,7 +7,7 @@ win_width = 1000
 win_height = 700
 
 # functionality buttons dimensions
-btn_width = 75
+btn_width = 85
 btn_height = 35
 
 # attributes of functionality frame
@@ -75,6 +75,11 @@ class ControlUI:
         reverse.place(
             x=10, y=first_btn_y + 150, width=btn_width, height=btn_height)
 
+        save = tk.Button(
+            func_frame, text='Save session', command=self.save_session)
+        save.place(
+            x=10, y=first_btn_y + 200, width=btn_width, height=btn_height)
+
         quit_btn = tk.Button(func_frame, text='Quit', fg='red', command=quit)
         quit_btn.place(
             x=10, y=win_height - 55, width=btn_width, height=btn_height)
@@ -93,27 +98,27 @@ class ControlUI:
 
         for_im = tk.Button(
             move_frame, image=photo_for, command=lambda: self.action('w'))
-        for_im.place(x=150, y=20, width=70, height=70)
+        for_im.place(x=150, y=20, width=60, height=60)
 
         back = tk.Button(
             move_frame, image=photo_back, command=lambda: self.action('s'))
-        back.place(x=150, y=160, width=70, height=70)
+        back.place(x=150, y=160, width=60, height=60)
 
         left = tk.Button(
             move_frame, image=photo_left, command=lambda: self.action('a'))
-        left.place(x=70, y=95, width=70, height=70)
+        left.place(x=70, y=95, width=60, height=60)
 
         right = tk.Button(
             move_frame, image=photo_right, command=lambda: self.action('d'))
-        right.place(x=230, y=95, width=70, height=70)
+        right.place(x=230, y=95, width=60, height=60)
 
         up = tk.Button(
             move_frame, image=photo_up, command=lambda: self.action('up'))
-        up.place(x=600, y=20, width=70, height=70)
+        up.place(x=600, y=20, width=60, height=60)
 
         down = tk.Button(
             move_frame, image=photo_down, command=lambda: self.action('down'))
-        down.place(x=600, y=160, width=70, height=70)
+        down.place(x=600, y=160, width=60, height=60)
 
         self.root.mainloop()
 
@@ -122,6 +127,9 @@ class ControlUI:
 
     def reverse(self):
         self.tello.fetch()
+
+    def save_session(self):
+        self.tello.write_session()
 
     def action(self, name):
         try:
