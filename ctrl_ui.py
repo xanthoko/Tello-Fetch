@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import simpledialog, messagebox
 
 from tello import Tello
 
@@ -41,10 +42,8 @@ cmd_map = {
 class ControlUI:
     """Creates the UI to control the tello."""
 
-    def __init__(self, session_id):
+    def __init__(self):
         """Creates tello object and the control UI."""
-        self.tello = Tello(session_id)
-
         self.root = tk.Tk()
         self.root.title('Tello drone')
         self.root.geometry("{}x{}".format(win_width, win_height))
@@ -57,9 +56,9 @@ class ControlUI:
         func_frame = tk.Frame(self.root)
         func_frame.place(**func_f)
 
-        connect = tk.Button(
-            func_frame, text='Connect', command=self.initialize)
+        connect = tk.Button(func_frame, text='Connect')
         connect.place(x=10, y=first_btn_y, width=btn_width, height=btn_height)
+        connect.bind('<Button-1>', self.input_session)
 
         takeoff = tk.Button(
             func_frame, text='Takeoff', command=lambda: self.action('tkoff'))
@@ -132,14 +131,29 @@ class ControlUI:
 
         self.root.mainloop()
 
-    def initialize(self):
-        self.tello.initialize()
+    def input_session(self, event):
+        """Waits for user to input the session id and initializes tello object."""
+        answer = simpledialog.askstring(
+            "Input", "What is your first name?", parent=self.root)
+        if answer is not None:
+            # if user did not press the cancel button
+            self.session_id = answer
+            self.tello = Tello(self.session_id)
+            self.tello.initialize()
 
     def reverse(self):
-        self.tello.fetch()
+        try:
+            self.tello.fetch()
+        except AttributeError:
+            # tello not initialized
+            self._show_warning()
 
     def save_session(self):
-        self.tello.write_session()
+        try:
+            self.tello.write_session()
+        except AttributeError:
+            # tello not initialized
+            self._show_warning()
 
     def action(self, name):
         """Map the button identifier to a valid tello command"""
@@ -148,7 +162,16 @@ class ControlUI:
             command = cmd_map[name]
             self.tello.send_command(command)
         except KeyError:
+            # name not in cmd_map
             print('[ERROR]: Cannot handle this command key.')
+        except AttributeError:
+            # tello not initialized
+            self._show_warning()
+
+    def _show_warning(self):
+        """Displays a message box with a warning text."""
+        messagebox.showwarning(
+            title='Action denied', message='You must be connected to tello')
 
 
-ob = ControlUI(1)
+ob = ControlUI()
