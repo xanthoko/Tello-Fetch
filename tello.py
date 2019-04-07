@@ -72,7 +72,13 @@ class Tello:
         while True:
             try:
                 response, ip = self.cmd_socket.recvfrom(1024)
-                print('[INFO]  Response: {}'.format(response.decode()))
+                try:
+                    print('[INFO]  Response: {}'.format(
+                        response.decode('UTF-8')))
+                except UnicodeDecodeError:
+                    print('UNCIDECODE ERROR')
+                    print('[INFO]  Response: {}'.format(
+                        response.decode('latin-1')))
                 if self.waiting:
                     # if the server is waiting for a reponse, set the waiting
                     # flag to False, as the response has arrived
