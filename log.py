@@ -127,5 +127,6 @@ class Logger:
             return
         with open(txt_name, 'w') as f:
             f.write(self.starting_time + '\n')
-            for cmd in self.get_pathing_commands():
-                f.write('\n{cmd.command} {cmd.sTime} {rTime}'.format(cmd=cmd))
+            for cmd in self.command_tuples:
+                f.write(
+                    '\n{cmd.command} {cmd.sTime} {cmd.rTime}'.format(cmd=cmd))
