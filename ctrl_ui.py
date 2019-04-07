@@ -33,8 +33,8 @@ cmd_map = {
     's': 'back 20',
     'a': 'left 20',
     'd': 'right 20',
-    'right': 'cw 20',
-    'left': 'ccw 20'
+    'cw': 'cw 20',
+    'ccw': 'ccw 20'
 }
 
 
@@ -95,6 +95,8 @@ class ControlUI:
         photo_right = tk.PhotoImage(file="assets/right-arrow.png")
         photo_up = tk.PhotoImage(file="assets/double_up.png")
         photo_down = tk.PhotoImage(file="assets/double_down.png")
+        photo_cw = tk.PhotoImage(file="assets/cw.png")
+        photo_ccw = tk.PhotoImage(file="assets/ccw.png")
 
         for_im = tk.Button(
             move_frame, image=photo_for, command=lambda: self.action('w'))
@@ -120,6 +122,14 @@ class ControlUI:
             move_frame, image=photo_down, command=lambda: self.action('down'))
         down.place(x=600, y=160, width=60, height=60)
 
+        cw = tk.Button(
+            move_frame, image=photo_cw, command=lambda: self.action('cw'))
+        cw.place(x=520, y=95, width=60, height=60)
+
+        ccw = tk.Button(
+            move_frame, image=photo_ccw, command=lambda: self.action('ccw'))
+        ccw.place(x=680, y=95, width=60, height=60)
+
         self.root.mainloop()
 
     def initialize(self):
@@ -132,7 +142,9 @@ class ControlUI:
         self.tello.write_session()
 
     def action(self, name):
+        """Map the button identifier to a valid tello command"""
         try:
+            # map to a tello-valid command
             command = cmd_map[name]
             self.tello.send_command(command)
         except KeyError:
