@@ -7,20 +7,17 @@ cmdPoint = namedtuple('cmdPoint', ['command', 'sTime', 'rTime'])
 
 class Logger:
     def __init__(self):
-        self.starting_time = None
-        self.start_stamp = None
+        self.starting_time = datetime.now().strftime('%A %d. %B, %H:%M')
+        self.start_stamp = time()
 
         # list of command with their timestamp
         self.commands = []
         self.command_tuples = []
         self.initialized = False
 
-    def start_session(self):
-        self.starting_time = datetime.now().strftime('%A %d. %B, %H:%M')
-        self.start_stamp = time()
-
     def add_command(self, command):
-        send_tuple = (command, time())
+        """Add command to commands list along with the sending time."""
+        send_tuple = (command, time() - self.start_stamp)
         self.commands.append(send_tuple)
 
     def command_timeout(self):
@@ -33,7 +30,7 @@ class Logger:
 
     def log_response(self, response):
         """Appends to command_tuples (command, sTime, rTime)."""
-        rsp_time = time()
+        rsp_time = time() - self.start_stamp
         latest_cmd = self.commands[-1]
         # form the cmdPoint tuple
         cmd_tuple = cmdPoint(
@@ -42,7 +39,6 @@ class Logger:
 
         if latest_cmd[0] == 'command':
             # if the response refers to the "command" command start the session
-            self.start_session()
             self.initialized = True
 
     def get_pathing_commands(self):
@@ -128,5 +124,5 @@ class Logger:
         with open(txt_name, 'w') as f:
             f.write(self.starting_time + '\n')
             for cmd in self.command_tuples:
-                f.write(
-                    '\n{cmd.command} {cmd.sTime} {cmd.rTime}'.format(cmd=cmd))
+                f.write('\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(
+                    cmd=cmd))
