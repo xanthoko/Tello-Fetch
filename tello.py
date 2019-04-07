@@ -58,6 +58,7 @@ class Tello:
 
             start = time()
             while self.waiting:
+                # when the response arrives, self.waiting is set to False
                 if time() - start > TIMEOUT:
                     # when the waiting period exceeds the timeout limit print the
                     # error and set the waiting flag to False, so that the server
@@ -66,10 +67,6 @@ class Tello:
                     self.log.command_timeout()
                     self.waiting = False
                     break
-            else:
-                # when the reponse arrives, self.waiting becomes False and
-                # the given command is appended to the commands list
-                self.log.add_command(command)
 
     def _receive_cmd_thread(self):
         while True:
