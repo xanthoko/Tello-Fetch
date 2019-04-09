@@ -1,5 +1,7 @@
+import os
+
 import tkinter as tk
-from tkinter import simpledialog, messagebox
+from tkinter import simpledialog, messagebox, filedialog
 
 from tello import Tello
 
@@ -8,11 +10,11 @@ win_width = 1000
 win_height = 700
 
 # functionality buttons dimensions
-btn_width = 85
+btn_width = 95
 btn_height = 35
 
 # attributes of functionality frame
-func_f = {'x': 0, 'y': 0, 'width': btn_width + 10, 'height': win_height}
+func_f = {'x': 0, 'y': 150, 'width': btn_width + 10, 'height': win_height}
 
 # attributes of moving frame
 move_f = {
@@ -23,7 +25,7 @@ move_f = {
 }
 
 # y coordinate of the first functionality button
-first_btn_y = 150
+first_btn_y = 0
 
 cmd_map = {
     'tkoff': 'takeoff',
@@ -56,6 +58,9 @@ class ControlUI:
         func_frame = tk.Frame(self.root)
         func_frame.place(**func_f)
 
+        self.status_label = tk.Label(self.root, text='Status: Not connected')
+        self.status_label.place(x=10, y=50)
+
         connect = tk.Button(func_frame, text='Connect')
         connect.place(x=10, y=first_btn_y, width=btn_width, height=btn_height)
         connect.bind('<Button-1>', self.input_session)
@@ -79,9 +84,14 @@ class ControlUI:
         save.place(
             x=10, y=first_btn_y + 200, width=btn_width, height=btn_height)
 
+        replay = tk.Button(
+            func_frame, text='Replay session', command=self.replay)
+        replay.place(
+            x=10, y=first_btn_y + 250, width=btn_width, height=btn_height)
+
         quit_btn = tk.Button(func_frame, text='Quit', fg='red', command=quit)
         quit_btn.place(
-            x=10, y=win_height - 55, width=btn_width, height=btn_height)
+            x=10, y=win_height - 205, width=btn_width, height=btn_height)
 
         # moves frame
 
@@ -134,12 +144,13 @@ class ControlUI:
     def input_session(self, event):
         """Waits for user to input the session id and initializes tello object."""
         answer = simpledialog.askstring(
-            "Input", "What is your first name?", parent=self.root)
+            "Input", "Enter session's name", parent=self.root)
         if answer is not None:
             # if user did not press the cancel button
             self.session_id = answer
             self.tello = Tello(self.session_id)
             self.tello.initialize()
+            self.update_status()
 
     def reverse(self):
         try:
@@ -155,18 +166,41 @@ class ControlUI:
             # tello not initialized
             self._show_warning()
 
+    def replay(self):
+        """User chooses a session file and tello reruns its commands."""
+        try:
+            # available file types
+            my_filetypes = [('text files', '.txt')]
+            answer = filedialog.askopenfilename(
+                parent=self.root,
+                initialdir=os.getcwd(),
+                title="Please select a file:",
+                filetypes=my_filetypes)
+
+            if answer:
+                # a txt file is chosen
+                self.tello.replay_session(answer)
+        except AttributeError:
+            self._show_warning()
+
     def action(self, name):
         """Map the button identifier to a valid tello command"""
         try:
             # map to a tello-valid command
             command = cmd_map[name]
             self.tello.send_command(command)
+            self.update_status()
         except KeyError:
             # name not in cmd_map
             print('[ERROR]: Cannot handle this command key.')
         except AttributeError:
             # tello not initialized
             self._show_warning()
+
+    def update_status(self):
+        """Gets the tello status and refreshes the status label."""
+        new_status = self.tello.get_status()
+        self.status_label['text'] = new_status
 
     def _show_warning(self):
         """Displays a message box with a warning text."""
