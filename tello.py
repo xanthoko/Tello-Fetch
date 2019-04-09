@@ -35,6 +35,9 @@ class Tello:
         # initialize the logger object
         self.log = Logger()
 
+        # tello status
+        self.status = 'Not connected'
+
     def send_command(self, command, reverse=False):
         if self.waiting:
             # if the server is waiting for a reponse, not further command
@@ -94,6 +97,18 @@ class Tello:
         for cmd in r_cmds:
             self.send_command(cmd, reverse=True)
 
+    def replay_session(self, session_file):
+        """Reads the command of the session file given and executes them."""
+        with open(session_file, 'r') as f:
+            lines = f.readlines()
+            # line1: date, line2: new_line, line3: "command"
+            cmd_tuples = lines[3:]
+
+        # the command part of the tuple
+        raw_cmds = list(map(lambda x: x.split('\t')[0], cmd_tuples))
+        for cmd in raw_cmds:
+            self.send_command(cmd)
+
     def write_session(self):
         try:
             os.makedirs('sessions')
@@ -103,5 +118,11 @@ class Tello:
         name = 'sessions/session_{}.txt'.format(self.session_id)
         self.log.to_text(name)
 
+    def get_status(self):
+        """Returns the tello's status."""
+        return self.log.status
+
     def initialize(self):
+        """Sends 'command' and updates the status to 'Connected'."""
         self.send_command('command')
+        self.status = 'Status: Connected'
