@@ -16,7 +16,7 @@ class Tello:
     cmd_address = (tello_ip, cmd_port)
     state_address = (tello_ip, state_port)
 
-    def __init__(self, session_id):
+    def __init__(self):
         # create command socket and bind it to command address
         self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cmd_socket.bind((self.host, self.cmd_port))
@@ -29,8 +29,6 @@ class Tello:
 
         # response waiting flag
         self.waiting = False
-
-        self.session_id = session_id
 
         # initialize the logger object
         self.log = Logger()
@@ -109,13 +107,13 @@ class Tello:
         for cmd in raw_cmds:
             self.send_command(cmd)
 
-    def write_session(self):
+    def write_session(self, session_id):
         try:
             os.makedirs('sessions')
         except FileExistsError:
             # session directory already exists
             pass
-        name = 'sessions/session_{}.txt'.format(self.session_id)
+        name = 'sessions/session_{}.txt'.format(session_id)
         self.log.to_text(name)
 
     def get_status(self):

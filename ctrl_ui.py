@@ -61,9 +61,9 @@ class ControlUI:
         self.status_label = tk.Label(self.root, text='Status: Not connected')
         self.status_label.place(x=10, y=50)
 
-        connect = tk.Button(func_frame, text='Connect')
+        connect = tk.Button(
+            func_frame, text='Connect', command=self.initialize)
         connect.place(x=10, y=first_btn_y, width=btn_width, height=btn_height)
-        connect.bind('<Button-1>', self.input_session)
 
         takeoff = tk.Button(
             func_frame, text='Takeoff', command=lambda: self.action('tkoff'))
@@ -79,10 +79,10 @@ class ControlUI:
         reverse.place(
             x=10, y=first_btn_y + 150, width=btn_width, height=btn_height)
 
-        save = tk.Button(
-            func_frame, text='Save session', command=self.save_session)
+        save = tk.Button(func_frame, text='Save session')
         save.place(
             x=10, y=first_btn_y + 200, width=btn_width, height=btn_height)
+        save.bind('<Button-1>', self.save_session)
 
         replay = tk.Button(
             func_frame, text='Replay session', command=self.replay)
@@ -141,16 +141,23 @@ class ControlUI:
 
         self.root.mainloop()
 
-    def input_session(self, event):
-        """Waits for user to input the session id and initializes tello object."""
+    def initialize(self):
+        """Initializes tello and updates displayed status."""
+        self.tello = Tello()
+        self.tello.initialize()
+        self.update_status()
+
+    def save_session(self, event):
+        """Waits for user to input the session id and saves it in a txt file."""
         answer = simpledialog.askstring(
             "Input", "Enter session's name", parent=self.root)
         if answer is not None:
             # if user did not press the cancel button
-            self.session_id = answer
-            self.tello = Tello(self.session_id)
-            self.tello.initialize()
-            self.update_status()
+            session_id = answer
+            try:
+                self.tello.write_session(session_id)
+            except AttributeError:
+                self._show_warning()
 
     def reverse(self):
         try:
@@ -159,12 +166,12 @@ class ControlUI:
             # tello not initialized
             self._show_warning()
 
-    def save_session(self):
-        try:
-            self.tello.write_session()
-        except AttributeError:
-            # tello not initialized
-            self._show_warning()
+    # def save_session(self):
+    #     try:
+    #         self.tello.write_session()
+    #     except AttributeError:
+    #         # tello not initialized
+    #         self._show_warning()
 
     def replay(self):
         """User chooses a session file and tello reruns its commands."""
