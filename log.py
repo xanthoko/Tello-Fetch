@@ -15,6 +15,8 @@ class Logger:
         self.command_tuples = []
         self.initialized = False
 
+        self.status = 'Not connected'
+
     def add_command(self, command):
         """Add command to commands list along with the sending time."""
         send_tuple = (command, time() - self.start_stamp)
@@ -36,6 +38,9 @@ class Logger:
         cmd_tuple = cmdPoint(
             command=latest_cmd[0], sTime=latest_cmd[1], rTime=rsp_time)
         self.command_tuples.append(cmd_tuple)
+
+        # update tello's status
+        self.update_status(latest_cmd[0])
 
         if latest_cmd[0] == 'command':
             # if the response refers to the "command" command start the session
@@ -126,3 +131,12 @@ class Logger:
             for cmd in self.command_tuples:
                 f.write('\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(
                     cmd=cmd))
+
+    def update_status(self, cmd):
+        """Updates the status according to the executed command."""
+        if cmd == 'command':
+            self.status = 'Connected'
+        elif cmd == 'takeoff':
+            self.status = 'In air'
+        elif cmd == 'land':
+            self.status = 'Landed'
