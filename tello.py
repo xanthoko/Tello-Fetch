@@ -123,4 +123,5 @@ class Tello:
     def initialize(self):
         """Sends 'command' and updates the status to 'Connected'."""
         self.send_command('command')
-        self.status = 'Status: Connected'
+        self.status = 'Connected'
+        return self.log.initialized
