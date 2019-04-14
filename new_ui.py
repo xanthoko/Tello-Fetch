@@ -24,13 +24,14 @@ start_offset = 20
 # functionality buttons dimensions
 btn_width = 95
 btn_height = 40
-btn_interv = 25
+btn_interv = 20
 btn_x = v_split * win_width / 2 - btn_width / 2
 
-dist_bar_y = 0.24 * win_height
+dist_bar_y = 0.19 * win_height
+angle_bar_y = 0.29 * win_height
 
 # y coordinate of the first functionality button
-first_btn_y = 0.4 * win_height
+first_btn_y = 0.42 * win_height
 
 move_map = {
     'w': 'forward',
@@ -90,6 +91,14 @@ class ControlUI:
         self.dist_bar = tk.Scale(
             frame1, from_=20, to=500, orient=tk.HORIZONTAL)
         self.dist_bar.place(x=start_offset, y=dist_bar_y, width=200)
+
+        angle_text_label = tk.Label(
+            frame1, text='Angle (1-360)', font='Helvetica 10 bold')
+        angle_text_label.place(x=start_offset, y=angle_bar_y - 20)
+
+        self.angle_bar = tk.Scale(
+            frame1, from_=1, to_=360, orient=tk.HORIZONTAL)
+        self.angle_bar.place(x=start_offset, y=angle_bar_y, width=200)
 
         # buttons
         connect = tk.Button(frame1, text='Connect', command=self.initialize)
@@ -206,8 +215,13 @@ class ControlUI:
         sends it. If tello is not initialzed, ignores the key press events."""
         key = event.keysym
         direction = move_map[key]
-        distance = self.dist_bar.get()
-        cmd = '{} {}'.format(direction, distance)
+        if direction in ['cw', 'ccw']:
+            # if command is rotating, the value comes from the angle bar
+            value = self.angle_bar.get()
+        else:
+            # if command is moving, value comes from the distance bar
+            value = self.dist_bar.get()
+        cmd = '{} {}'.format(direction, value)
 
         try:
             self.tello.send_command(cmd)
