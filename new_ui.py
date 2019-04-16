@@ -1,7 +1,7 @@
 import os
 
 import tkinter as tk
-from tkinter import simpledialog, messagebox, filedialog
+from tkinter import messagebox, filedialog
 
 from tello import Tello
 
@@ -128,6 +128,14 @@ class ControlUI:
             width=btn_width,
             height=btn_height)
 
+        streamon = tk.Button(
+            frame1, text='Stream On', command=lambda: self.action('streamon'))
+        streamon.place(
+            x=btn_x,
+            y=first_btn_y + 4 * btn_height + 4 * btn_interv,
+            width=btn_width,
+            height=btn_height)
+
         stop = tk.Button(
             frame1,
             text='STOP',
@@ -135,7 +143,7 @@ class ControlUI:
             command=lambda: self.action('emergency'))
         stop.place(
             x=btn_x,
-            y=first_btn_y + 4 * btn_height + 4 * btn_interv,
+            y=first_btn_y + 5 * btn_height + 5 * btn_interv,
             width=btn_width,
             height=btn_height)
 
@@ -168,7 +176,7 @@ class ControlUI:
         except AttributeError:
             self._show_warning()
             return
-        answer = simpledialog.askstring(
+        answer = tk.simpledialog.askstring(
             "Input", "Enter session's name", parent=self.root)
         if answer is not None:
             # if user did not press the cancel button
