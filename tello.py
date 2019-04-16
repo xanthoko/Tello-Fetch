@@ -13,19 +13,30 @@ class Tello:
     tello_ip = '192.168.10.1'
     cmd_port = 8889
     state_port = 8890
+    video_port = 11111
     cmd_address = (tello_ip, cmd_port)
     state_address = (tello_ip, state_port)
+    video_address = (tello_ip, video_port)
 
     def __init__(self):
-        # create command socket and bind it to command address
+        # create command socket and bind it to cmd_port
         self.cmd_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cmd_socket.bind((self.host, self.cmd_port))
+
+        # create video socket and bind it to video address
+        self.video_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.video_socket.bind((self.host, self.video_port))
 
         # start the receiving command thread
         self.receive_cmd_thread = threading.Thread(
             target=self._receive_cmd_thread)
         self.receive_cmd_thread.daemon = True
         self.receive_cmd_thread.start()
+
+        # create the video thread
+        self.receive_video_thread = threading.Thread(
+            target=self._receive_video_thread)
+        self.receive_video_thread.daemon = True
 
         # response waiting flag
         self.waiting = False
@@ -35,6 +46,9 @@ class Tello:
 
         # tello status
         self.status = 'Not connected'
+
+    def __del__(self):
+        self.cmd_socket.close()
 
     def send_command(self, command, reverse=False):
         if self.waiting:
@@ -68,8 +82,14 @@ class Tello:
                     self.log.command_timeout()
                     self.waiting = False
                     break
+            else:
+                # if command is streamon, start the video receiving thread
+                if command == 'streamon':
+                    self.receive_video_thread.start()
 
     def _receive_cmd_thread(self):
+        """Waits for a response to come and if client is waiting for a response,
+        log the response and set waiting=False."""
         while True:
             try:
                 response, ip = self.cmd_socket.recvfrom(1024)
@@ -85,6 +105,17 @@ class Tello:
                     # flag to False, as the response has arrived
                     self.log.log_response(response)
                     self.waiting = False
+            except socket.error as e:
+                print('[ERROR] {}'.format(e))
+
+    def _receive_video_thread(self):
+        packet_data = ""
+        while True:
+            try:
+                response, ip = self.video_socket.recvfrom(2048)
+                packet_data += response
+                # if len(response) != 1460:
+                #     print(str(packet_data))
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
