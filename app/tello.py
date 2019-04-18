@@ -3,6 +3,8 @@ import socket
 import threading
 from time import time
 
+import libh264decoder
+
 from log import Logger
 
 TIMEOUT = 10
@@ -109,13 +111,17 @@ class Tello:
                 print('[ERROR] {}'.format(e))
 
     def _receive_video_thread(self):
-        packet_data = ""
+        """Receives response from the video socket and decodes the incoming
+        bytestream to frames."""
+        packet_data = bytearray("", encoding='utf8')
         while True:
             try:
                 response, ip = self.video_socket.recvfrom(2048)
-                packet_data += response
-                # if len(response) != 1460:
-                #     print(str(packet_data))
+                packet_data.extend(response)
+                if len(response) != 1460:
+                    # decode packet_data to frames
+                    print(len(packet_data))
+                    packet_data.clear()
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
@@ -144,7 +150,7 @@ class Tello:
         except FileExistsError:
             # session directory already exists
             pass
-        name = 'sessions/session_{}.txt'.format(session_id)
+        name = '../sessions/session_{}.txt'.format(session_id)
         self.log.to_text(name)
 
     def get_status(self):
