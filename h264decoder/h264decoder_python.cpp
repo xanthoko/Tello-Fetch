@@ -101,8 +101,8 @@ py::tuple PyH264Decoder::decode_frame_impl(const ubyte *data_in, ssize_t len, ss
 
     gilguard.lock();
     //   Construction of py::handle causes ... TODO: WHAT? No increase of ref count ?!
-    py::object py_out_str(py::handle<>(PyUnicode_FromStringAndSize(NULL, out_size)));
-    char* out_buffer = PyUnicode_AsUTF8(py_out_str.ptr());
+    py::object py_out_str(py::handle<>(PyString_FromStringAndSize(NULL, out_size)));
+    char* out_buffer = PyString_AsString(py_out_str.ptr());
 
     gilguard.unlock();
     const auto &rgbframe = converter.convert(frame, (ubyte*)out_buffer);
@@ -120,8 +120,8 @@ py::tuple PyH264Decoder::decode_frame_impl(const ubyte *data_in, ssize_t len, ss
 
 py::tuple PyH264Decoder::decode_frame(const py::str &data_in_str)
 {
-  ssize_t len = PyBytes_Size(data_in_str.ptr());
-  const ubyte* data_in = (const ubyte*)(PyUnicode_AsUTF8(data_in_str.ptr()));
+  ssize_t len = PyString_Size(data_in_str.ptr());
+  const ubyte* data_in = (const ubyte*)(PyString_AsString(data_in_str.ptr()));
 
   ssize_t num_consumed = 0;
   bool is_frame_available = false;
@@ -133,8 +133,8 @@ py::tuple PyH264Decoder::decode_frame(const py::str &data_in_str)
 
 py::list PyH264Decoder::decode(const py::str &data_in_str)
 {
-  ssize_t len = PyBytes_Size(data_in_str.ptr());
-  const ubyte* data_in = (const ubyte*)(PyUnicode_AsUTF8(data_in_str.ptr()));
+  ssize_t len = PyString_Size(data_in_str.ptr());
+  const ubyte* data_in = (const ubyte*)(PyString_AsString(data_in_str.ptr()));
   
   py::list out;
   

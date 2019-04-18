@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 2.8)
 project(python_h264decoder)
 
-set(Python_ADDITIONAL_VERSIONS 3.5)
+set(Python_ADDITIONAL_VERSIONS 2.7)
 
 if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
@@ -16,8 +16,8 @@ endif(APPLE)
 
 
 
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED )
+find_package(PythonInterp 2.7 REQUIRED)
+find_package(PythonLibs 2.7 REQUIRED )
 
 
 include_directories(${PYTHON_INCLUDE_DIRS})
