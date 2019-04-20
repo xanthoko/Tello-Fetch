@@ -1,6 +1,7 @@
 import os
 import socket
 import threading
+import numpy as np
 from time import time
 
 import libh264decoder
@@ -48,6 +49,11 @@ class Tello:
 
         # tello status
         self.status = 'Not connected'
+
+        # h264 decoder
+        self.decoder = libh264decoder.H264Decoder()
+
+        self.frame = None
 
     def __del__(self):
         self.cmd_socket.close()
@@ -112,12 +118,12 @@ class Tello:
 
     def _receive_video_thread(self):
         """Receives response from the video socket and decodes the incoming
-        bytestream to frames."""
+        bytestream to frames. Frames are 960x720."""
         # python 2
         packet_data = ""
         while True:
             try:
-                res_string, ip = self.socket_video.recvfrom(2048)
+                res_string, ip = self.video_socket.recvfrom(2048)
                 packet_data += res_string
                 # end of frame
                 if len(res_string) != 1460:
@@ -140,6 +146,26 @@ class Tello:
         #             packet_data.clear()
         #     except socket.error as e:
         #         print('[ERROR] {}'.format(e))
+
+    def _h264_decode(self, packet_data):
+        """Decode raw h264 format data from Tello.
+
+        :param packet_data: raw h264 data array
+
+        :return: a list of decoded frame
+        """
+        res_frame_list = []
+        frames = self.decoder.decode(packet_data)
+        for framedata in frames:
+            (frame, w, h, ls) = framedata
+            if frame is not None:
+                frame = np.fromstring(
+                    frame, dtype=np.ubyte, count=len(frame), sep='')
+                frame = (frame.reshape((h, ls / 3, 3)))
+                frame = frame[:, :w, :]
+                res_frame_list.append(frame)
+
+        return res_frame_list
 
     def fetch(self):
         """Sends the reversed path commands to tello."""
