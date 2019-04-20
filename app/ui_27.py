@@ -12,7 +12,7 @@ from tello import Tello
 
 # dimensions of the ui window
 win_width = 1000
-win_height = 750
+win_height = 650
 
 v_split = 0.25
 
@@ -167,8 +167,12 @@ class ControlUI:
             height=btn_height)
 
         # -------------------------- frame 2 --------------------------------
-        self.image_panel = tk.Label(frame2)
-        self.image_panel.pack(fill=tk.BOTH)
+        self.image_panel = tk.Label(frame2, bd=2, relief='groove')
+        self.image_panel.place(
+            x=10,
+            y=10,
+            width=(1 - v_split) * win_width - 20,
+            height=win_height - 20)
 
         # -------------------------- key bindings ----------------------------
         self.root.bind('<KeyPress-w>', self.move)
