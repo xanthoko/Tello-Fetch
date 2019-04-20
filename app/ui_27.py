@@ -1,8 +1,12 @@
 import os
+import threading
 
 import Tkinter as tk
 import tkMessageBox
 import tkFileDialog
+
+from PIL import Image
+from PIL import ImageTk
 
 from tello import Tello
 
@@ -51,6 +55,12 @@ class ControlUI:
 
     def __init__(self):
         """Creates tello object and the control UI."""
+        self.video_thread = threading.Thread(target=self.video_loop)
+        self.video_thread.daemon = True
+
+        self.frame = None
+        self.stream_flag = False
+
         self.root = tk.Tk()
         self.root.title('Tello drone')
         self.root.geometry("{0}x{1}".format(win_width, win_height))
@@ -58,7 +68,7 @@ class ControlUI:
         frame1 = tk.Frame(self.root)
         frame1.place(**f1_att)
 
-        frame2 = tk.Frame(self.root, bg='blue')
+        frame2 = tk.Frame(self.root)
         frame2.place(**f2_att)
 
         # ------------------------ menu -----------------------------------
@@ -130,7 +140,7 @@ class ControlUI:
             height=btn_height)
 
         streamon = tk.Button(
-            frame1, text='Stream On', command=lambda: self.action('streamon'))
+            frame1, text='Stream On', command=self.start_camera)
         streamon.place(
             x=btn_x,
             y=first_btn_y + 4 * btn_height + 4 * btn_interv,
@@ -147,6 +157,10 @@ class ControlUI:
             y=first_btn_y + 5 * btn_height + 5 * btn_interv,
             width=btn_width,
             height=btn_height)
+
+        # -------------------------- frame 2 --------------------------------
+        self.image_panel = tk.Label(frame2)
+        self.image_panel.pack(fill=tk.BOTH)
 
         # -------------------------- key bindings ----------------------------
         self.root.bind('<KeyPress-w>', self.move)
@@ -242,6 +256,31 @@ class ControlUI:
         """Gets the tello status and refreshes the status label."""
         new_status = self.tello.get_status()
         self.status_label['text'] = new_status
+
+    def start_camera(self):
+        """Sends streamon command and starts the video thread."""
+        try:
+            self.tello.send_command('streamon')
+            # set stream flag to start the video loop
+            self.stream_flag = True
+            self.video_thread.start()
+        except AttributeError:
+            self._show_warning()
+
+    def video_loop(self):
+        """Reads the tello frame, converts is to PIL image and updates
+        the GUI image."""
+        while self.stream_flag:
+            if self.tello.frame is None:
+                continue
+
+            # convert image array to PIL image
+            image = Image.fromarray(self.tello.frame)
+
+            tk_image = ImageTk.PhotoImage(image)
+            # load new image to image panel
+            self.image_panel.configure(image=tk_image)
+            self.image_panel.image = tk_image
 
     def _show_warning(self):
         """Displays a message box with a warning text."""
