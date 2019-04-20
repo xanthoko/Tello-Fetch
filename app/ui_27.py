@@ -29,14 +29,14 @@ start_offset = 20
 # functionality buttons dimensions
 btn_width = 95
 btn_height = 40
-btn_interv = 20
+btn_interv = 15
 btn_x = v_split * win_width / 2 - btn_width / 2
 
-dist_bar_y = 0.19 * win_height
-angle_bar_y = 0.29 * win_height
+dist_bar_y = 0.15 * win_height
+angle_bar_y = 0.25 * win_height
 
 # y coordinate of the first functionality button
-first_btn_y = 0.42 * win_height
+first_btn_y = 0.38 * win_height
 
 move_map = {
     'w': 'forward',
@@ -89,10 +89,10 @@ class ControlUI:
         # ---------------------- frame 1 -----------------------------------
         status_text_label = tk.Label(
             frame1, text='Status:', font='Helvetica 11 bold')
-        status_text_label.place(x=start_offset, y=50)
+        status_text_label.place(x=start_offset, y=20)
         self.status_label = tk.Label(
             frame1, text='Not connected', font='Helvetica 11')
-        self.status_label.place(x=v_split * win_width / 2 - 20, y=51)
+        self.status_label.place(x=v_split * win_width / 2 - 20, y=21)
 
         # sliders
         dist_label = tk.Label(
@@ -140,10 +140,18 @@ class ControlUI:
             height=btn_height)
 
         streamon = tk.Button(
-            frame1, text='Stream On', command=self.start_camera)
+            frame1, text='Stream On', command=self.start_stream)
         streamon.place(
             x=btn_x,
             y=first_btn_y + 4 * btn_height + 4 * btn_interv,
+            width=btn_width,
+            height=btn_height)
+
+        streamoff = tk.Button(
+            frame1, text='Stream Off', command=self.stop_stream)
+        streamoff.place(
+            x=btn_x,
+            y=first_btn_y + 5 * btn_height + 5 * btn_interv,
             width=btn_width,
             height=btn_height)
 
@@ -154,7 +162,7 @@ class ControlUI:
             command=lambda: self.action('emergency'))
         stop.place(
             x=btn_x,
-            y=first_btn_y + 5 * btn_height + 5 * btn_interv,
+            y=first_btn_y + 6 * btn_height + 6 * btn_interv,
             width=btn_width,
             height=btn_height)
 
@@ -257,7 +265,7 @@ class ControlUI:
         new_status = self.tello.get_status()
         self.status_label['text'] = new_status
 
-    def start_camera(self):
+    def start_stream(self):
         """Sends streamon command and starts the video thread."""
         try:
             self.tello.send_command('streamon')
@@ -267,11 +275,22 @@ class ControlUI:
         except AttributeError:
             self._show_warning()
 
+    def stop_stream(self):
+        """Sends streamoff command and sets stream_flag False to stop the
+        video looping thread."""
+        try:
+            self.tello.send_command('streamoff')
+            self.stream_flag = False
+        except AttributeError:
+            self._show_warning()
+
     def video_loop(self):
         """Reads the tello frame, converts is to PIL image and updates
         the GUI image."""
         while self.stream_flag:
+            # while stream flag is True
             if self.tello.frame is None:
+                # skip initial none frames
                 continue
 
             # convert image array to PIL image
