@@ -11,12 +11,12 @@ import cv2
 from tello import Tello
 
 # dimensions of the ui window
-win_width = 1000
-win_height = 650
+win_width = 500
+win_height = 500
 
-v_split = 0.25
-
-f1_att = {'x': 0, 'y': 0, 'width': v_split * win_width, 'height': win_height}
+status_y = 0.05 * win_height
+status_x1 = 0.3 * win_width
+status_x2 = 0.5 * win_width
 
 start_offset = 20
 
@@ -24,13 +24,17 @@ start_offset = 20
 btn_width = 95
 btn_height = 40
 btn_interv = 15
-btn_x = v_split * win_width / 2 - btn_width / 2
+btn_x = win_width / 2 - btn_width / 2
+btn_x_interv = 40
+s_btn_x = 0.5 * win_width
 
-dist_bar_y = 0.15 * win_height
-angle_bar_y = 0.25 * win_height
+dist_bar_y = 0.35 * win_height
+angle_bar_y = 0.5 * win_height
 
 # y coordinate of the first functionality button
-first_btn_y = 0.38 * win_height
+first_btn_y = 0.15 * win_height
+second_btn_y = dist_bar_y
+third_btn_y = angle_bar_y
 
 move_map = {
     'w': 'forward',
@@ -60,9 +64,6 @@ class ControlUI:
 
         self.video_thread = threading.Thread(target=self.video_loop)
 
-        frame1 = tk.Frame(self.root)
-        frame1.place(**f1_att)
-
         # ------------------------ menu -----------------------------------
         menu = tk.Menu(self.root)
         self.root.config(menu=menu)
@@ -78,83 +79,79 @@ class ControlUI:
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=show_info)
 
-        # ---------------------- frame 1 -----------------------------------
+        # ---------------------- status ------------------------------------
         status_text_label = tk.Label(
-            frame1, text='Status:', font='Helvetica 11 bold')
-        status_text_label.place(x=start_offset, y=20)
+            self.root, text='Status:', font='Helvetica 11 bold')
+        status_text_label.place(x=status_x1, y=status_y)
+
         self.status_label = tk.Label(
-            frame1, text='Not connected', font='Helvetica 11')
-        self.status_label.place(x=v_split * win_width / 2 - 20, y=21)
+            self.root, text='Not connected', font='Helvetica 11')
+        self.status_label.place(x=status_x2, y=status_y)
 
-        # sliders
-        dist_label = tk.Label(
-            frame1, text='Distance (20-500 cm)', font='Helvetica 10 bold')
-        dist_label.place(x=start_offset, y=dist_bar_y - 20)
-
-        self.dist_bar = tk.Scale(
-            frame1, from_=20, to=500, orient=tk.HORIZONTAL)
-        self.dist_bar.place(x=start_offset, y=dist_bar_y, width=200)
-
-        angle_text_label = tk.Label(
-            frame1, text='Angle (1-360)', font='Helvetica 10 bold')
-        angle_text_label.place(x=start_offset, y=angle_bar_y - 20)
-
-        self.angle_bar = tk.Scale(
-            frame1, from_=1, to_=360, orient=tk.HORIZONTAL)
-        self.angle_bar.place(x=start_offset, y=angle_bar_y, width=200)
-
-        # buttons
-        connect = tk.Button(frame1, text='Connect', command=self.initialize)
+        # --------------------- first buttons -------------------------------
+        connect = tk.Button(self.root, text='Connect', command=self.initialize)
         connect.place(
-            x=btn_x, y=first_btn_y, width=btn_width, height=btn_height)
-
-        takeoff = tk.Button(
-            frame1, text='Takeoff', command=lambda: self.action('takeoff'))
-        takeoff.place(
-            x=btn_x,
-            y=first_btn_y + btn_height + btn_interv,
-            width=btn_width,
-            height=btn_height)
-
-        reverse = tk.Button(frame1, text='Call back', command=self.reverse)
-        reverse.place(
-            x=btn_x,
-            y=first_btn_y + 2 * btn_height + 2 * btn_interv,
-            width=btn_width,
-            height=btn_height)
-
-        land = tk.Button(
-            frame1, text='Land', command=lambda: self.action('land'))
-        land.place(
-            x=btn_x,
-            y=first_btn_y + 3 * btn_height + 3 * btn_interv,
+            x=btn_x - btn_x_interv - btn_width,
+            y=first_btn_y,
             width=btn_width,
             height=btn_height)
 
         streamon = tk.Button(
-            frame1, text='Stream On', command=self.start_stream)
+            self.root, text='Stream On', command=self.start_stream)
         streamon.place(
-            x=btn_x,
-            y=first_btn_y + 4 * btn_height + 4 * btn_interv,
-            width=btn_width,
-            height=btn_height)
+            x=btn_x, y=first_btn_y, width=btn_width, height=btn_height)
 
         streamoff = tk.Button(
-            frame1, text='Stream Off', command=self.stop_stream)
+            self.root, text='Stream Off', command=self.stop_stream)
         streamoff.place(
-            x=btn_x,
-            y=first_btn_y + 5 * btn_height + 5 * btn_interv,
+            x=btn_x + btn_x_interv + btn_width,
+            y=first_btn_y,
             width=btn_width,
             height=btn_height)
 
+        # --------------------------- sliders ------------------------------
+        dist_label = tk.Label(
+            self.root, text='Distance (20-500 cm)', font='Helvetica 10 bold')
+        dist_label.place(x=start_offset, y=dist_bar_y - 20)
+
+        self.dist_bar = tk.Scale(
+            self.root, from_=20, to=500, orient=tk.HORIZONTAL)
+        self.dist_bar.place(x=start_offset, y=dist_bar_y, width=200)
+
+        angle_text_label = tk.Label(
+            self.root, text='Angle (1-360)', font='Helvetica 10 bold')
+        angle_text_label.place(x=start_offset, y=angle_bar_y - 20)
+
+        self.angle_bar = tk.Scale(
+            self.root, from_=1, to_=360, orient=tk.HORIZONTAL)
+        self.angle_bar.place(x=start_offset, y=angle_bar_y, width=200)
+
+        # -------------------------- second buttons --------------------------
+        takeoff = tk.Button(
+            self.root, text='Takeoff', command=lambda: self.action('takeoff'))
+        takeoff.place(
+            x=s_btn_x, y=second_btn_y, width=btn_width, height=btn_height)
+
+        land = tk.Button(
+            self.root, text='Land', command=lambda: self.action('land'))
+        land.place(
+            x=s_btn_x + btn_x_interv + btn_width,
+            y=second_btn_y,
+            width=btn_width,
+            height=btn_height)
+
+        reverse = tk.Button(self.root, text='Call back', command=self.reverse)
+        reverse.place(
+            x=s_btn_x, y=third_btn_y, width=btn_width, height=btn_height)
+
         stop = tk.Button(
-            frame1,
+            self.root,
             text='STOP',
             fg='red',
             command=lambda: self.action('emergency'))
         stop.place(
-            x=btn_x,
-            y=first_btn_y + 6 * btn_height + 6 * btn_interv,
+            x=s_btn_x + btn_x_interv + btn_width,
+            y=third_btn_y,
             width=btn_width,
             height=btn_height)
 
