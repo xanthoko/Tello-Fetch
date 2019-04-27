@@ -4,9 +4,9 @@ import threading
 import Tkinter as tk
 import tkMessageBox
 import tkFileDialog
+import tkSimpleDialog
 
-from PIL import Image
-from PIL import ImageTk
+import cv2
 
 from tello import Tello
 
@@ -17,12 +17,6 @@ win_height = 650
 v_split = 0.25
 
 f1_att = {'x': 0, 'y': 0, 'width': v_split * win_width, 'height': win_height}
-f2_att = {
-    'x': v_split * win_width,
-    'y': 0,
-    'width': (1 - v_split) * win_width,
-    'height': win_height
-}
 
 start_offset = 20
 
@@ -55,8 +49,6 @@ class ControlUI:
 
     def __init__(self):
         """Creates tello object and the control UI."""
-        self.video_thread = threading.Thread(target=self.video_loop)
-        self.video_thread.daemon = True
 
         self.frame = None
         self.stream_flag = False
@@ -64,12 +56,12 @@ class ControlUI:
         self.root = tk.Tk()
         self.root.title('Tello drone')
         self.root.geometry("{0}x{1}".format(win_width, win_height))
+        self.root.wm_protocol("WM_DELETE_WINDOW", self.on_quit)
+
+        self.video_thread = threading.Thread(target=self.video_loop)
 
         frame1 = tk.Frame(self.root)
         frame1.place(**f1_att)
-
-        frame2 = tk.Frame(self.root)
-        frame2.place(**f2_att)
 
         # ------------------------ menu -----------------------------------
         menu = tk.Menu(self.root)
@@ -80,7 +72,7 @@ class ControlUI:
         filemenu.add_command(label="Load Session", command=self.load_session)
         filemenu.add_command(label="Save Session", command=self.save_session)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=quit)
+        filemenu.add_command(label="Exit", command=self.on_quit)
 
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
@@ -166,14 +158,6 @@ class ControlUI:
             width=btn_width,
             height=btn_height)
 
-        # -------------------------- frame 2 --------------------------------
-        self.image_panel = tk.Label(frame2, bd=2, relief='groove')
-        self.image_panel.place(
-            x=10,
-            y=10,
-            width=(1 - v_split) * win_width - 20,
-            height=win_height - 20)
-
         # -------------------------- key bindings ----------------------------
         self.root.bind('<KeyPress-w>', self.move)
         self.root.bind('<KeyPress-s>', self.move)
@@ -191,6 +175,7 @@ class ControlUI:
         self.tello = Tello()
         flag = self.tello.initialize()
         if not flag:
+            # if initialization fails
             del self.tello
         else:
             self.update_status()
@@ -203,7 +188,7 @@ class ControlUI:
         except AttributeError:
             self._show_warning()
             return
-        answer = tk.simpledialog.askstring(
+        answer = tkSimpleDialog.askstring(
             "Input", "Enter session's name", parent=self.root)
         if answer is not None:
             # if user did not press the cancel button
@@ -289,26 +274,29 @@ class ControlUI:
             self._show_warning()
 
     def video_loop(self):
-        """Reads the tello frame, converts is to PIL image and updates
+        """Reads the tello frame, converts it to PIL image and updates
         the GUI image."""
+        # while self.stream_flag:
         while self.stream_flag:
+            frame = self.tello.frame
             # while stream flag is True
-            if self.tello.frame is None:
+            if frame is None:
                 # skip initial none frames
                 continue
 
-            # convert image array to PIL image
-            image = Image.fromarray(self.tello.frame)
-
-            tk_image = ImageTk.PhotoImage(image)
-            # load new image to image panel
-            self.image_panel.configure(image=tk_image)
-            self.image_panel.image = tk_image
+            cv2.imshow('ds', frame)
+            cv2.waitKey(10)
 
     def _show_warning(self):
         """Displays a message box with a warning text."""
         tkMessageBox.showwarning(
             title='Action denied', message='You must be connected to tello')
+
+    def on_quit(self):
+        self.stream_flag = False
+        self.root.destroy()
+        cv2.destroyAllWindows()
+        exit()
 
 
 def show_info():
