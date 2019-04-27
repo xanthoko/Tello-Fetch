@@ -33,13 +33,11 @@ class Tello:
         # start the receiving command thread
         self.receive_cmd_thread = threading.Thread(
             target=self._receive_cmd_thread)
-        self.receive_cmd_thread.daemon = True
         self.receive_cmd_thread.start()
 
         # create the video thread
         self.receive_video_thread = threading.Thread(
             target=self._receive_video_thread)
-        self.receive_video_thread.daemon = True
 
         # response waiting flag
         self.waiting = False
@@ -57,6 +55,7 @@ class Tello:
 
     def __del__(self):
         self.cmd_socket.close()
+        self.video_socket.close()
 
     def send_command(self, command, reverse=False):
         if self.waiting:
@@ -106,8 +105,8 @@ class Tello:
                         response.decode('UTF-8')))
                 except UnicodeDecodeError:
                     print('UNCIDECODE ERROR')
-                    print('[INFO]  Response: {}'.format(
-                        response.decode('latin-1')))
+                    # print('[INFO]  Response: {}'.format(
+                    #     response.decode('latin-1')))
                 if self.waiting:
                     # if the server is waiting for a reponse, set the waiting
                     # flag to False, as the response has arrived
@@ -188,7 +187,7 @@ class Tello:
 
     def write_session(self, session_id):
         try:
-            os.makedirs('sessions')
+            os.makedirs('../sessions')
         except FileExistsError:
             # session directory already exists
             pass
