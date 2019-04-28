@@ -198,8 +198,14 @@ class Tello:
         """Returns the tello's status."""
         return self.log.status
 
+    def get_battery(self):
+        """Returns tello's battery level."""
+        return self.log.battery
+
     def initialize(self):
         """Sends 'command' and updates the status to 'Connected'."""
         self.send_command('command')
         self.status = 'Connected'
+        # get the battery level of tello
+        self.send_command('battery?')
         return self.log.initialized
