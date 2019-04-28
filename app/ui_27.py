@@ -184,6 +184,7 @@ class ControlUI:
             del self.tello
         else:
             self.update_status()
+            self.update_battery()
 
     def save_session(self):
         """Waits for user to input the session id and saves it in a txt file."""
@@ -258,6 +259,12 @@ class ControlUI:
         """Gets the tello status and refreshes the status label."""
         new_status = self.tello.get_status()
         self.status_label['text'] = new_status
+
+    def update_battery(self):
+        """Retrieves the battery level of tello and displays it in
+        battery label."""
+        battery_level = self.tello.get_battery()
+        self.battery_label['text'] = battery_level
 
     def start_stream(self):
         """Sends streamon command and starts the video thread."""
