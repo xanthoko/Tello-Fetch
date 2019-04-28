@@ -15,6 +15,7 @@ class Logger:
         self.command_tuples = []
         self.initialized = False
 
+        self.battery = None
         self.status = 'Not connected'
 
     def add_command(self, command):
@@ -45,6 +46,9 @@ class Logger:
         if latest_cmd[0] == 'command':
             # if the response refers to the "command" command start the session
             self.initialized = True
+
+        if latest_cmd[0] == 'battery?':
+            self.battery = response
 
     def get_pathing_commands(self):
         """Returns a list of the grouped pathing commands.
