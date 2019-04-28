@@ -15,8 +15,9 @@ win_width = 500
 win_height = 500
 
 status_y = 0.05 * win_height
-status_x1 = 0.3 * win_width
-status_x2 = 0.5 * win_width
+status_x1 = 0.05 * win_width
+status_x2 = 0.6 * win_width
+status_int = 80
 
 start_offset = 20
 
@@ -86,7 +87,14 @@ class ControlUI:
 
         self.status_label = tk.Label(
             self.root, text='Not connected', font='Helvetica 11')
-        self.status_label.place(x=status_x2, y=status_y)
+        self.status_label.place(x=status_x1 + status_int, y=status_y + 1)
+
+        battery_text_label = tk.Label(
+            self.root, text='Battery:', font='Helvetica 11 bold')
+        battery_text_label.place(x=status_x2, y=status_y)
+
+        self.battery_label = tk.Label(self.root, text='-', font='Helvetica 11')
+        self.battery_label.place(x=status_x2 + status_int, y=status_y + 1)
 
         # --------------------- first buttons -------------------------------
         connect = tk.Button(self.root, text='Connect', command=self.initialize)
@@ -290,8 +298,11 @@ class ControlUI:
             title='Action denied', message='You must be connected to tello')
 
     def on_quit(self):
+        # stop video thread
         self.stream_flag = False
+        # close GUI
         self.root.destroy()
+        # close opencv window
         cv2.destroyAllWindows()
         exit()
 
