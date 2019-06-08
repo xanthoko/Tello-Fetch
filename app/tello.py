@@ -2,9 +2,9 @@ import os
 import socket
 import threading
 import numpy as np
-from time import time
+from time import time, sleep
 
-import libh264decoder
+# import libh264decoder
 
 from log import Logger
 
@@ -31,8 +31,7 @@ class Tello:
         self.video_socket.bind((self.host, self.video_port))
 
         # start the receiving command thread
-        self.receive_cmd_thread = threading.Thread(
-            target=self._receive_cmd_thread)
+        self.receive_cmd_thread = threading.Thread(target=self._receive_cmd_thread)
         self.receive_cmd_thread.start()
 
         # create the video thread
@@ -45,11 +44,14 @@ class Tello:
         # initialize the logger object
         self.log = Logger()
 
+        # indicates whether a command was executed successfully
+        self.command_success = False
+
         # tello status
         self.status = 'Not connected'
 
         # h264 decoder
-        self.decoder = libh264decoder.H264Decoder()
+        # self.decoder = libh264decoder.H264Decoder()
 
         self.frame = None
 
@@ -59,40 +61,47 @@ class Tello:
 
     def send_command(self, command, reverse=False):
         if self.waiting:
-            # if the server is waiting for a reponse, not further command
+            # if the server is waiting for a reponse, no further command
             # can be accepted and sent
             print('[ERROR] Another command awaits reponse, please wait')
-        else:
-            if command != 'command' and not self.log.initialized:
-                # if tello is not initialized it cannot accept any commands
-                print(
-                    '[ERROR]: Tello must be initialized. Run "command" first.')
+            return False
+
+        if command != 'command' and not self.log.initialized:
+            # if tello is not initialized it cannot accept any commands
+            print('[ERROR]: Tello must be initialized. Run "command" first.')
+            return False
+
+        if not reverse:
+            # if the command is part of fetching, dont print it
+            print('[INFO]  Sending: {}'.format(command))
+        # send the command encoded to utf-8
+        self.cmd_socket.sendto(command.encode('utf-8'), self.cmd_address)
+        self.log.set_command_sent(command)
+        # waiting flag is set to True
+        self.waiting = True
+
+        start = time()
+        while self.waiting:
+            # when the response arrives, self.waiting is set to False
+            sleep(0.005)  # limit to 200 checks per second
+            if time() - start > TIMEOUT:
+                # when the waiting period exceeds the timeout limit print the
+                # error and set the waiting flag to False, so that the server
+                # can accept a new command
+                print('[ERROR] Command {} timed out.'.format(command))
+                self.log.reset()
+                self.waiting = False
                 return False
-
-            if not reverse:
-                # if the command is part of fetching, dont print it
-                print('[INFO]  Sending: {}'.format(command))
-            # send the command encoded to utf-8
-            self.cmd_socket.sendto(command.encode('utf-8'), self.cmd_address)
-            self.log.add_command(command)
-            # waiting flag is set to True
-            self.waiting = True
-
-            start = time()
-            while self.waiting:
-                # when the response arrives, self.waiting is set to False
-                if time() - start > TIMEOUT:
-                    # when the waiting period exceeds the timeout limit print the
-                    # error and set the waiting flag to False, so that the server
-                    # can accept a new command
-                    print('[ERROR] Command {} timed out.'.format(command))
-                    self.log.command_timeout()
-                    self.waiting = False
-                    break
-            else:
-                # if command is streamon, start the video receiving thread
+        else:
+            # executed when while is terminated by the self.waiting command and
+            # not the break
+            if self.command_success:
                 if command == 'streamon':
+                    # start the video receiving thread
                     self.receive_video_thread.start()
+                return True
+            else:
+                return False
 
     def _receive_cmd_thread(self):
         """Waits for a response to come and if client is waiting for a response,
@@ -101,17 +110,12 @@ class Tello:
             try:
                 response, ip = self.cmd_socket.recvfrom(1024)
                 try:
-                    print('[INFO]  Response: {}'.format(
-                        response.decode('UTF-8')))
+                    print('[INFO]  Response: {}'.format(response.decode('UTF-8')))
                 except UnicodeDecodeError:
-                    print('UNCIDECODE ERROR')
-                    # print('[INFO]  Response: {}'.format(
-                    #     response.decode('latin-1')))
-                if self.waiting:
-                    # if the server is waiting for a reponse, set the waiting
-                    # flag to False, as the response has arrived
-                    self.log.log_response(response)
-                    self.waiting = False
+                    print('[INFO]  Response: {}'.format(response.decode('latin-1')))
+
+                self.command_success = self.log.log_response(response)
+                self.waiting = False
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
@@ -154,12 +158,15 @@ class Tello:
         :return: a list of decoded frame
         """
         res_frame_list = []
-        frames = self.decoder.decode(packet_data)
+        # frames = self.decoder.decode(packet_data)
+        frames = []
         for framedata in frames:
             (frame, w, h, ls) = framedata
             if frame is not None:
-                frame = np.fromstring(
-                    frame, dtype=np.ubyte, count=len(frame), sep='')
+                frame = np.fromstring(frame,
+                                      dtype=np.ubyte,
+                                      count=len(frame),
+                                      sep='')
                 frame = (frame.reshape((h, ls / 3, 3)))
                 frame = frame[:, :w, :]
                 res_frame_list.append(frame)
@@ -203,9 +210,10 @@ class Tello:
         return self.log.battery
 
     def initialize(self):
-        """Sends 'command' and updates the status to 'Connected'."""
-        self.send_command('command')
-        self.status = 'Connected'
-        # get the battery level of tello
-        self.send_command('battery?')
-        return self.log.initialized
+        """Sends 'command' and 'battery'."""
+        if self.send_command('command'):
+            self.status = 'Connected'
+            # get the battery level of tello
+            self.send_command('battery?')
+            return True
+        return False
