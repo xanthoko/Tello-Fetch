@@ -10,45 +10,46 @@ class Logger:
         self.starting_time = datetime.now().strftime('%A %d. %B, %H:%M')
         self.start_stamp = time()
 
-        # list of command with their timestamp
-        self.commands = []
-        self.command_tuples = []
-        self.initialized = False
+        self.command_sent = ()  # tuple with the command sent and its timestamp
+        self.command_tuples = []  # list of cmdPoints
 
         self.battery = None
         self.status = 'Not connected'
 
-    def add_command(self, command):
-        """Add command to commands list along with the sending time."""
-        send_tuple = (command, time() - self.start_stamp)
-        self.commands.append(send_tuple)
+    def set_command_sent(self, command):
+        """Sets the command sent."""
+        self.command_sent = (command, time() - self.start_stamp)
 
-    def command_timeout(self):
-        """If the command sent times out, delete it from commnads list."""
-        try:
-            del self.commands[-1]
-            return True
-        except IndexError:
-            return False
+    def reset(self):
+        """Empties the command_sent tuple."""
+        self.command_sent = ()
 
     def log_response(self, response):
-        """Appends to command_tuples (command, sTime, rTime)."""
+        """Handles tello's response."""
         rsp_time = time() - self.start_stamp
-        latest_cmd = self.commands[-1]
-        # form the cmdPoint tuple
-        cmd_tuple = cmdPoint(
-            command=latest_cmd[0], sTime=latest_cmd[1], rTime=rsp_time)
-        self.command_tuples.append(cmd_tuple)
+
+        if response == 'Error':
+            # tello failed to execute command
+            self.reset()
+            return False
+
+        try:
+            # form the cmdPoint tuple
+            cmd_tuple = cmdPoint(command=self.command_sent[0],
+                                 sTime=self.command_sent[1],
+                                 rTime=rsp_time)
+            self.command_tuples.append(cmd_tuple)
+        except IndexError:
+            # IndexError: command_sent is an empty tuple
+            return False
 
         # update tello's status
-        self.update_status(latest_cmd[0])
+        self.update_status(self.command_sent[0])
 
-        if latest_cmd[0] == 'command':
-            # if the response refers to the "command" command start the session
-            self.initialized = True
-
-        if latest_cmd[0] == 'battery?':
+        if self.command_sent[0] == 'battery?':
             self.battery = response
+
+        return True
 
     def get_pathing_commands(self):
         """Returns a list of the grouped pathing commands.
@@ -133,8 +134,7 @@ class Logger:
         with open(txt_name, 'w') as f:
             f.write(self.starting_time + '\n')
             for cmd in self.command_tuples:
-                f.write('\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(
-                    cmd=cmd))
+                f.write('\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(cmd=cmd))
 
     def update_status(self, cmd):
         """Updates the status according to the executed command."""
