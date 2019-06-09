@@ -148,32 +148,31 @@ class Tello:
         When a frame is decoded, it is assigned to the frame attribute.
         """
         # python 2
-        packet_data = ""
-        while True:
-            try:
-                res_string, ip = self.video_socket.recvfrom(2048)
-                packet_data += res_string
-                # end of frame
-                if len(res_string) != 1460:
-                    for frame in self._h264_decode(packet_data):
-                        self.frame = frame
-                    packet_data = ""
-
-            except socket.error as exc:
-                print("Caught exception socket.error : %s" % exc)
-
-        # python 3
-        # packet_data = bytearray("", encoding='utf8')
+        # packet_data = ""
         # while True:
         #     try:
-        #         response, ip = self.video_socket.recvfrom(2048)
-        #         packet_data.extend(response)
-        #         if len(response) != 1460:
-        #             # decode packet_data to frames
-        #             print(len(packet_data))
-        #             packet_data.clear()
-        #     except socket.error as e:
-        #         print('[ERROR] {}'.format(e))
+        #         res_string, ip = self.video_socket.recvfrom(2048)
+        #         packet_data += res_string
+        #         # end of frame
+        #         if len(res_string) != 1460:
+        #             for frame in self._h264_decode(packet_data):
+        #                 self.frame = frame
+        #             packet_data = ""
+
+        #     except socket.error as exc:
+        #         print("Caught exception socket.error : %s" % exc)
+
+        # python 3
+        packet_data = bytearray("", encoding='utf8')
+        while True:
+            try:
+                response, ip = self.video_socket.recvfrom(2048)
+                packet_data.extend(response)
+                if len(response) != 1460:
+                    # decode packet_data to frames
+                    packet_data.clear()
+            except socket.error as e:
+                print('[ERROR] {}'.format(e))
 
     def _h264_decode(self, packet_data):
         """Decode raw h264 format data from Tello.
