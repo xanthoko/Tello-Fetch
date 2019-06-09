@@ -12,6 +12,7 @@ TIMEOUT = 10
 
 
 class Tello:
+    """Handles the communication between the client and the tello."""
     host = ''
     tello_ip = '192.168.10.1'
     cmd_port = 8889
@@ -31,7 +32,8 @@ class Tello:
         self.video_socket.bind((self.host, self.video_port))
 
         # start the receiving command thread
-        self.receive_cmd_thread = threading.Thread(target=self._receive_cmd_thread)
+        self.receive_cmd_thread = threading.Thread(
+            target=self._receive_cmd_thread)
         self.receive_cmd_thread.start()
 
         # create the video thread
@@ -56,10 +58,24 @@ class Tello:
         self.frame = None
 
     def __del__(self):
+        """On delete, closes the running sockets."""
         self.cmd_socket.close()
         self.video_socket.close()
 
     def send_command(self, command, reverse=False):
+        """Sends the given command to tello and waits in a loop for the response.
+
+        The loop is exited if the waiting flag is set to False or the timeout
+        window has expired.
+
+        Args:
+            command (string): The command to be sent
+            reverse (bool): If the command belongs to reverse pathing commands
+        Returns:
+            bool: True if the command sent successfully and the response was
+            "OK". False if the command could not be sent or the response was
+            "ERROR".
+        """
         if self.waiting:
             # if the server is waiting for a reponse, no further command
             # can be accepted and sent
@@ -104,24 +120,33 @@ class Tello:
                 return False
 
     def _receive_cmd_thread(self):
-        """Waits for a response to come and if client is waiting for a response,
-        log the response and set waiting=False."""
+        """Listens for a response from the cmd_socket.
+
+        When the response arrives, calls log.received which sets the
+        command_success attribute and sets the waiting flag to False.
+        """
         while True:
             try:
                 response, ip = self.cmd_socket.recvfrom(1024)
                 try:
-                    print('[INFO]  Response: {}'.format(response.decode('UTF-8')))
+                    print('[INFO]  Response: {}'.format(
+                        response.decode('UTF-8')))
                 except UnicodeDecodeError:
-                    print('[INFO]  Response: {}'.format(response.decode('latin-1')))
+                    print('[INFO]  Response: {}'.format(
+                        response.decode('latin-1')))
 
-                self.command_success = self.log.log_response(response)
+                self.command_success = self.log.received(response)
                 self.waiting = False
             except socket.error as e:
                 print('[ERROR] {}'.format(e))
 
     def _receive_video_thread(self):
-        """Receives response from the video socket and decodes the incoming
-        bytestream to frames. Frames are 960x720."""
+        """Listens for a response from the video_socket.
+
+        When the response's body length is not 1460, the data included in the
+        packet_data string are decoded to frames with dimensions 960x720.
+        When a frame is decoded, it is assigned to the frame attribute.
+        """
         # python 2
         packet_data = ""
         while True:
@@ -174,14 +199,19 @@ class Tello:
         return res_frame_list
 
     def fetch(self):
-        """Sends the reversed path commands to tello."""
+        """Retrieves the reversed pathing commands and sends them to tello."""
         print('[INFO] Returning home...')
         r_cmds = self.log.reverse_path_cmd()
         for cmd in r_cmds:
+            # TODO: what if command fails
             self.send_command(cmd, reverse=True)
 
     def replay_session(self, session_file):
-        """Reads the command of the session file given and executes them."""
+        """Reads the command of the session file given and executes them.
+
+        Args:
+            session_file (string): The file of the session to be loaded
+        """
         with open(session_file, 'r') as f:
             lines = f.readlines()
             # line1: date, line2: new_line, line3: "command"
@@ -192,25 +222,33 @@ class Tello:
         for cmd in raw_cmds:
             self.send_command(cmd)
 
-    def write_session(self, session_id):
+    def write_session(self, session_name):
+        """Writes the current session to a txt file by calling log.to_text
+
+        Args:
+            session_name (string): The name of the session
+        """
         try:
             os.makedirs('../sessions')
         except FileExistsError:
             # session directory already exists
             pass
-        name = '../sessions/session_{}.txt'.format(session_id)
+        name = '../sessions/session_{}.txt'.format(session_name)
         self.log.to_text(name)
 
     def get_status(self):
-        """Returns the tello's status."""
         return self.log.status
 
     def get_battery(self):
-        """Returns tello's battery level."""
         return self.log.battery
 
     def initialize(self):
-        """Sends 'command' and 'battery'."""
+        """Sends "command" command and if the response was successful, sends
+        "battery" command.
+
+        Returns:
+            bool: True if "command" was sent successfully, False if "command" failed
+        """
         if self.send_command('command'):
             self.status = 'Connected'
             # get the battery level of tello

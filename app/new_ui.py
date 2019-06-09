@@ -314,4 +314,5 @@ def show_info():
     return
 
 
-ob = ControlUI()
+if __name__ == '__main__':
+    ob = ControlUI()

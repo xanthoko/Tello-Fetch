@@ -6,6 +6,18 @@ cmdPoint = namedtuple('cmdPoint', ['command', 'sTime', 'rTime'])
 
 
 class Logger:
+    """Handles the logs of a tello session.
+
+    Attributes:
+        starting_time: The starting datetime of the session
+        start_stamp: Starting timestamp
+        command_sent: A list tuple containing the body and the time of the
+            command sent to tello
+        command_tuples: A list of cmdPoint tuples
+        battery: The battery level of tello
+        status: The status of tello
+    """
+
     def __init__(self):
         self.starting_time = datetime.now().strftime('%A %d. %B, %H:%M')
         self.start_stamp = time()
@@ -17,15 +29,24 @@ class Logger:
         self.status = 'Not connected'
 
     def set_command_sent(self, command):
-        """Sets the command sent."""
         self.command_sent = (command, time() - self.start_stamp)
 
     def reset(self):
-        """Empties the command_sent tuple."""
+        """Sets the command_sent attribute to an empty tuple."""
         self.command_sent = ()
 
-    def log_response(self, response):
-        """Handles tello's response."""
+    def received(self, response):
+        """Handles tello's response.
+
+        If it is not an error response, updates the command_tuples list,
+        the status and the battery level.
+
+        Args:
+            response (string): The body of the response
+        Returns:
+            bool: True if execution was successful, False if response was
+            "Error" or a command was not sent
+        """
         rsp_time = time() - self.start_stamp
 
         if response == 'Error':
@@ -52,11 +73,14 @@ class Logger:
         return True
 
     def get_pathing_commands(self):
-        """Returns a list of the grouped pathing commands.
+        """Forms a list of the grouped pathing commands.
 
         Pathing commands have the following format: {direction} {value}
         Same commands are grouped, that means that they are represented
         as {direction} {sum_value}.
+
+        Returns:
+            List of strings: The grouped command strings.
         """
         pathing_command_list = [
             'up', 'down', 'left', 'right', 'forward', 'back', 'cw', 'ccw'
@@ -98,7 +122,13 @@ class Logger:
 
     def reverse_path_cmd(self):
         """Iterates through the grouped pathing commands and returns their
-        reveresed."""
+        reveresed.
+
+        The reverse of a command is defined by the reverse_cmd_map dictionary.
+
+        Returns:
+            List of strings: The reversed pathing commands
+        """
         # path_cmd is a list of cmdPoints
         path_cmd = self.get_pathing_commands()
 
@@ -126,18 +156,26 @@ class Logger:
         return reversed_path_cmd
 
     def to_text(self, txt_name):
-        """Creates a text to with the starting datetime and the
-        pathing commands."""
+        """Generates a txt file with the commands of the current session.
+
+        Args:
+            txt_name (string): The name of the generated file
+        """
         if self.starting_time is None:
             print('[INFO] Empty session.')
             return
         with open(txt_name, 'w') as f:
             f.write(self.starting_time + '\n')
             for cmd in self.command_tuples:
-                f.write('\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(cmd=cmd))
+                f.write(
+                    '\n{cmd.command}\t {cmd.sTime} {cmd.rTime}'.format(cmd=cmd))
 
     def update_status(self, cmd):
-        """Updates the status according to the executed command."""
+        """Updates the status according to the executed command.
+
+        Args:
+            cmd (string): The body of the command executed
+        """
         if cmd == 'command':
             self.status = 'Connected'
         elif cmd == 'takeoff':
