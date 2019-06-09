@@ -2,6 +2,8 @@ import os
 import cv2
 import threading
 import tkinter as tk
+from tkinter import messagebox
+from tkinter import simpledialog, filedialog
 
 from tello import Tello
 
@@ -171,32 +173,33 @@ class ControlUI:
         self.root.mainloop()
 
     def initialize(self):
-        """Initializes tello and updates displayed status."""
+        """Initializes tello and updates the displayed status and battery."""
         self.tello = Tello()
         flag = self.tello.initialize()
         if not flag:
-            # if initialization fails
+            # initialization fails
             del self.tello
         else:
             self.update_status()
             self.update_battery()
 
     def save_session(self):
-        """Waits for user to input the session id and saves it in a txt file."""
+        """Opens a dialogue for the user to input a session name. Calls
+        tello.write_session to save the session."""
         try:
             # check if tello is connected
             self.tello
         except AttributeError:
             self._show_warning()
             return
-        answer = tk.tkSimpleDialog.askstring(
+        answer = simpledialog.askstring(
             "Input", "Enter session's name", parent=self.root)
         if answer is not None:
-            # if user did not press the cancel button
-            session_id = answer
-            self.tello.write_session(session_id)
+            # user did not press the cancel button
+            self.tello.write_session(answer)
 
     def reverse(self):
+        """Calls tello.fetch to set tello in reverse mode."""
         try:
             self.tello.fetch()
         except AttributeError:
@@ -204,12 +207,13 @@ class ControlUI:
             self._show_warning()
 
     def load_session(self):
-        """User chooses a session file and tello reruns its commands."""
+        """Prompts the user to chose a txt file to load and calls
+        tello.replay_session to rerun the chosen session."""
         try:
             self.tello
             # available file types
             my_filetypes = [('text files', '.txt')]
-            answer = tk.tkFileDialog.askopenfilename(
+            answer = filedialog.askopenfilename(
                 parent=self.root,
                 initialdir=os.getcwd(),
                 title="Please select a file:",
@@ -223,7 +227,11 @@ class ControlUI:
             self._show_warning()
 
     def action(self, name):
-        """Sends takeoff-land-emergency command to tello."""
+        """Sends the given command to tello.
+
+        Args:
+            name (string): The command to be sent
+        """
         try:
             self.tello.send_command(name)
             self.update_status()
@@ -232,8 +240,15 @@ class ControlUI:
             self._show_warning()
 
     def move(self, event):
-        """Maps key pressed to a valid tello command, gets the distance and
-        sends it. If tello is not initialzed, ignores the key press events."""
+        """Sends a moving command to tello.
+
+        Maps the key pressed to a valid tello command through move_map, gets the
+        distance or angle of the movement and sents it to tello
+
+        Args:
+            event (tkinter.Event): the event that called the method
+        """
+        print(type(event))
         key = event.keysym
         direction = move_map[key]
         if direction in ['cw', 'ccw']:
@@ -296,10 +311,11 @@ class ControlUI:
 
     def _show_warning(self):
         """Displays a message box with a warning text."""
-        tk.tkMessageBox.showwarning(
+        messagebox.showwarning(
             title='Action denied', message='You must be connected to tello')
 
     def on_quit(self):
+        """Sets stream_flag to False and destroys the tkinter and cv2 GUIs."""
         # stop video thread
         self.stream_flag = False
         # close GUI
