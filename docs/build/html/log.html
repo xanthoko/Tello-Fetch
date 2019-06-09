@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>log.py &#8212; Tello 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="tello.py" href="tello.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="log-py">
+<h1>log.py<a class="headerlink" href="#log-py" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="log.Logger">
+<em class="property">class </em><code class="sig-prename descclassname">log.</code><code class="sig-name descname">Logger</code><a class="headerlink" href="#log.Logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles the logs of a tello session.</p>
+<dl class="attribute">
+<dt id="log.Logger.starting_time">
+<code class="sig-name descname">starting_time</code><a class="headerlink" href="#log.Logger.starting_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>The starting datetime of the session</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="log.Logger.start_stamp">
+<code class="sig-name descname">start_stamp</code><a class="headerlink" href="#log.Logger.start_stamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starting timestamp</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="log.Logger.command_sent">
+<code class="sig-name descname">command_sent</code><a class="headerlink" href="#log.Logger.command_sent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list tuple containing the body and the time of the
+command sent to tello</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="log.Logger.command_tuples">
+<code class="sig-name descname">command_tuples</code><a class="headerlink" href="#log.Logger.command_tuples" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of cmdPoint tuples</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="log.Logger.battery">
+<code class="sig-name descname">battery</code><a class="headerlink" href="#log.Logger.battery" title="Permalink to this definition">¶</a></dt>
+<dd><p>The battery level of tello</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="log.Logger.status">
+<code class="sig-name descname">status</code><a class="headerlink" href="#log.Logger.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>The status of tello</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.get_pathing_commands">
+<code class="sig-name descname">get_pathing_commands</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.get_pathing_commands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forms a list of the grouped pathing commands.</p>
+<p>Pathing commands have the following format: {direction} {value}
+Same commands are grouped, that means that they are represented
+as {direction} {sum_value}.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The grouped command strings.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List of strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.received">
+<code class="sig-name descname">received</code><span class="sig-paren">(</span><em class="sig-param">response</em><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles tello’s response.</p>
+<p>If it is not an error response, updates the command_tuples list,
+the status and the battery level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>response</strong> (<em>string</em>) – The body of the response</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if execution was successful, False if response was
+“Error” or a command was not sent</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the command_sent attribute to an empty tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.reverse_path_cmd">
+<code class="sig-name descname">reverse_path_cmd</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.reverse_path_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates through the grouped pathing commands and returns their
+reveresed.</p>
+<p>The reverse of a command is defined by the reverse_cmd_map dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The reversed pathing commands</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List of strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.to_text">
+<code class="sig-name descname">to_text</code><span class="sig-paren">(</span><em class="sig-param">txt_name</em><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.to_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a txt file with the commands of the current session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>txt_name</strong> (<em>string</em>) – The name of the generated file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="log.Logger.update_status">
+<code class="sig-name descname">update_status</code><span class="sig-paren">(</span><em class="sig-param">cmd</em><span class="sig-paren">)</span><a class="headerlink" href="#log.Logger.update_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the status according to the executed command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cmd</strong> (<em>string</em>) – The body of the command executed</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tello</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="new_ui.html">new_ui.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tello.html">tello.py</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">log.py</a><ul class="simple">
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tello.html" title="previous chapter">tello.py</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Konstantinos Xanthopoulos.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/log.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
