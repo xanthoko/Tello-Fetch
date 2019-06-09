@@ -16,6 +16,7 @@ class Logger:
         command_tuples: A list of cmdPoint tuples
         battery: The battery level of tello
         status: The status of tello
+        initialized: A boolean that indicates if tello is initialized
     """
 
     def __init__(self):
@@ -27,6 +28,8 @@ class Logger:
 
         self.battery = None
         self.status = 'Not connected'
+
+        self.initialized = False
 
     def set_command_sent(self, command):
         self.command_sent = (command, time() - self.start_stamp)
@@ -177,6 +180,7 @@ class Logger:
             cmd (string): The body of the command executed
         """
         if cmd == 'command':
+            self.initialized = True
             self.status = 'Connected'
         elif cmd == 'takeoff':
             self.status = 'In air'
